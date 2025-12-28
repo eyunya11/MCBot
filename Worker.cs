@@ -10,26 +10,29 @@ public class Worker : BackgroundService
 {
     private readonly ILogger<Worker> _logger;
     private readonly DiscordSocketClient _client;
+    private readonly IConfiguration _config;
     private RCON _rcon;
-    private const string RCON_PASSWORD = "pass";
-    private const string SERVER_IP = "172.17.0.1";
-    private const ushort RCON_PORT = 25575;
 
-
-    public Worker(ILogger<Worker> logger, DiscordSocketClient client)
+    public Worker(ILogger<Worker> logger, DiscordSocketClient client, IConfiguration config)
     {
         _logger = logger;
         _client = client;
+        _config = config;
     }
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _client.Log += LogAsync;
         _client.MessageReceived += OnMessageReceived;
 
+        string rconIp = _config["Minecraft:IP"];
+        string rconPass = _config["Minecraft:RconPassword"];
+        ushort rconPort = _config.GetValue<ushort>("Minecraft:Port");
+        string discordToken = _config["Discord:Token"];
+        
         try
         {
-            var endpoint = new IPEndPoint(IPAddress.Parse(SERVER_IP),RCON_PORT);
-            _rcon = new RCON(endpoint, RCON_PASSWORD);
+            var endpoint = new IPEndPoint(IPAddress.Parse(rconIp),rconPort);
+            _rcon = new RCON(endpoint, rconPass);
 
             await _rcon.ConnectAsync();
             _logger.LogInformation("RCON接続成功");
@@ -39,17 +42,17 @@ public class Worker : BackgroundService
             _logger.LogInformation("RCON接続失敗");
         }
 
-        var jsonPath = Path.Combine(AppContext.BaseDirectory, "token.json");
+        // var jsonPath = Path.Combine(AppContext.BaseDirectory, "token.json");
 
-        using var fs = File.OpenRead(jsonPath);
-        var cfg = await JsonSerializer.DeserializeAsync<TokenConfig>(fs);
-        var token = cfg?.Token;
-        if (string.IsNullOrWhiteSpace(token))
-        {
-            throw new InvalidOperationException("トークンが空です。");
-        }
+        // using var fs = File.OpenRead(jsonPath);
+        // var cfg = await JsonSerializer.DeserializeAsync<TokenConfig>(fs);
+        // var token = cfg?.Token;
+        // if (string.IsNullOrWhiteSpace(token))
+        // {
+        //     throw new InvalidOperationException("トークンが空です。");
+        // }
 
-        await _client.LoginAsync(TokenType.Bot, token);
+        await _client.LoginAsync(TokenType.Bot, discordToken);
         await _client.StartAsync();
 
         _logger.LogInformation("起動完了");
@@ -57,10 +60,10 @@ public class Worker : BackgroundService
         await Task.Delay(Timeout.Infinite, stoppingToken);
     }
 
-    private sealed class TokenConfig
-    {
-        public string? Token { get; set; }
-    }
+    // private sealed class TokenConfig
+    // {
+    //     public string? Token { get; set; }
+    // }
 
     private Task LogAsync(LogMessage msg)
     {
