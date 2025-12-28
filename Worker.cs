@@ -84,9 +84,7 @@ public class Worker : BackgroundService
         {
             string text = message.Content.Replace("!say ","");
 
-            string result = await _rcon.SendCommandAsync($"say {text}");
-
-            await message.Channel.SendMessageAsync($"送信しました: {result}");
+            await _rcon.SendCommandAsync($"say {text}");
         }
     }
 }
