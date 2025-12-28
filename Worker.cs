@@ -12,7 +12,7 @@ public class Worker : BackgroundService
     private readonly DiscordSocketClient _client;
     private RCON _rcon;
     private const string RCON_PASSWORD = "pass";
-    private const string SERVER_IP = "127.17.0.1";
+    private const string SERVER_IP = "172.17.0.1";
     private const ushort RCON_PORT = 25575;
 
 
