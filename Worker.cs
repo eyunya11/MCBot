@@ -145,6 +145,11 @@ public class Worker : BackgroundService
     private async Task OnMessageReceived(SocketMessage message)
     {
         if(message.Author.IsBot) return;
+        
+        if(message.Content.StartsWith("消えてなくなってしまえぇぇぇ"))
+        {
+            await _rcon.SendCommandAsync($"kill @e");
+        }
 
         await _rcon.SendCommandAsync($"say {message.Author.GlobalName} :{message.Content}");
     }
