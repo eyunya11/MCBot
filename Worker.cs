@@ -121,7 +121,7 @@ public class Worker : BackgroundService
             {
                 string messageToSend = line;
                 int splitIndex = line.IndexOf("]: ");
-                if(line.Contains("[Rcon] "))
+                if(line.Contains("[Rcon]"))
                 {
                     splitIndex = line.IndexOf("[Rcon] ");
                     messageToSend = line.Substring(splitIndex + 6);
