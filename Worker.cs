@@ -104,10 +104,12 @@ public class Worker : BackgroundService
 
         bool shouldSend = false;
 
-        if (line.Contains(": <")) shouldSend = true; // チャット
-        else if (line.Contains("joined the game")) shouldSend = true; // 参加
-        else if (line.Contains("left the game")) shouldSend = true; // 退出
+        if (line.Contains(": <")) shouldSend = true;
+        else if (line.Contains("joined the game")) shouldSend = true;
+        else if (line.Contains("left the game")) shouldSend = true;
         else if (line.Contains("has made the advancement")) shouldSend = true;
+        else if (line.Contains("has completed the challenge")) shouldSend = true;
+        else if (line.Contains(": [")) shouldSend = true;
 
         if (shouldSend)
         {
