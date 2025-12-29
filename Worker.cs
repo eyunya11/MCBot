@@ -97,6 +97,36 @@ public class Worker : BackgroundService
         }
     }
 
+    private async Task ProcessLogLine(string line, ulong channelId)
+    {
+        if(line.Contains("RCON Client")) return;
+        if(!line.Contains("[Server thread/INFO]")) return;
+
+        bool shouldSend = false;
+
+        if (line.Contains(": <")) shouldSend = true; // チャット
+        else if (line.Contains("joined the game")) shouldSend = true; // 参加
+        else if (line.Contains("left the game")) shouldSend = true; // 退出
+
+        if (shouldSend)
+        {
+            var channel = _client.GetChannel(channelId) as IMessageChannel;
+            if (channel != null)
+            {
+                // 時刻などは削除して見やすくする処理（正規表現を使うともっと綺麗になります）
+                // 例: [12:00:00] [Server thread/INFO]: <Steve> Hello  -->  <Steve> Hello
+                string messageToSend = line;
+                int splitIndex = line.IndexOf("]: ");
+                if (splitIndex != -1)
+                {
+                    messageToSend = line.Substring(splitIndex + 3);
+                }
+
+                await channel.SendMessageAsync(messageToSend);
+            }
+        }
+    }
+
     // private sealed class TokenConfig
     // {
     //     public string? Token { get; set; }
