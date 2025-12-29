@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using System.Text.Json;
 using CoreRCON;
 using System.Net;
+using System.Text;
 
 namespace MCBot;
 
@@ -28,6 +29,9 @@ public class Worker : BackgroundService
         string rconPass = _config["Minecraft:RconPassword"];
         ushort rconPort = _config.GetValue<ushort>("Minecraft:Port");
         string discordToken = _config["Discord:Token"];
+
+        string logPath = _config["Minecraft:LogPath"];
+        ulong channelId = _config.GetValue<ulong>("Discord:ChannelId");
         
         try
         {
@@ -57,7 +61,40 @@ public class Worker : BackgroundService
 
         _logger.LogInformation("起動完了");
 
+        _ = Task.Run(() => WatchLogAsync(logPath, channelId, stoppingToken), stoppingToken);
+
         await Task.Delay(Timeout.Infinite, stoppingToken);
+    }
+
+    private async Task WatchLogAsync(string logPath, ulong channelId, CancellationToken token)
+    {
+        while (!File.Exists(logPath) && !token.IsCancellationRequested)
+        {
+            await Task.Delay(3000, token);
+            _logger.LogInformation("ログファイルが見つかりませんでした");
+        }
+
+        _logger.LogInformation("ログ監視開始");
+
+        using (var stream = new FileStream(logPath, FileMode.Open, FileAccess.Read, FileShare.Write))
+        using (var reader = new StreamReader(stream, Encoding.UTF8))
+        {
+            reader.BaseStream.Seek(0, SeekOrigin.End);
+
+            while(!token.IsCancellationRequested)
+            {
+                string line = await reader.ReadLineAsync();
+
+                if(line != null)
+                {
+                    await ProcessLogLine(line, channelId);
+                }
+                else
+                {
+                    await Task.Delay(500, token);
+                }
+            }
+        }
     }
 
     // private sealed class TokenConfig
