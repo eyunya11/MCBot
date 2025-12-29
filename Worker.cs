@@ -145,7 +145,7 @@ public class Worker : BackgroundService
     private async Task OnMessageReceived(SocketMessage message)
     {
         if(message.Author.IsBot) return;
-        if(message.Channel.Id == _config.GetValue<ulong>("Discord:ChannelId")) return;
+        if(message.Channel.Id != _config.GetValue<ulong>("Discord:ChannelId")) return;
         
         // if(message.Content.StartsWith("消えてなくなってしまえぇぇぇ"))
         // {
