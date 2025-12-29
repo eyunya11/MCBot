@@ -113,8 +113,6 @@ public class Worker : BackgroundService
             var channel = _client.GetChannel(channelId) as IMessageChannel;
             if (channel != null)
             {
-                // 時刻などは削除して見やすくする処理（正規表現を使うともっと綺麗になります）
-                // 例: [12:00:00] [Server thread/INFO]: <Steve> Hello  -->  <Steve> Hello
                 string messageToSend = line;
                 int splitIndex = line.IndexOf("]: ");
                 if (splitIndex != -1)
@@ -126,11 +124,6 @@ public class Worker : BackgroundService
             }
         }
     }
-
-    // private sealed class TokenConfig
-    // {
-    //     public string? Token { get; set; }
-    // }
 
     private Task LogAsync(LogMessage msg)
     {
