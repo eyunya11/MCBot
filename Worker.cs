@@ -104,7 +104,7 @@ public class Worker : BackgroundService
         if(!line.Contains("[Server thread/INFO]")) return;
         if(line.Contains("[Rcon]")) return;
 
-        List<string> Conditions = new List<string>{": <","joined the game","has made the advancement","has completed the challenge",": [@",": [",};
+        List<string> Conditions = new List<string>{": <","joined the game","left the game","has made the advancement","has completed the challenge",": [@",": [",};
         bool shouldSend = false;
 
         foreach(string text in Conditions)
