@@ -111,6 +111,7 @@ public class Worker : BackgroundService
         else if (line.Contains("has completed the challenge")) shouldSend = true;
         else if (line.Contains(": [@")) shouldSend = false;
         else if (line.Contains(": [")) shouldSend = true;
+        else if (line.Contains("[Rcon]")) shouldSend = false;
 
         if (shouldSend)
         {
