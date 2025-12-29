@@ -107,6 +107,7 @@ public class Worker : BackgroundService
         if (line.Contains(": <")) shouldSend = true; // チャット
         else if (line.Contains("joined the game")) shouldSend = true; // 参加
         else if (line.Contains("left the game")) shouldSend = true; // 退出
+        else if (line.Contains("has made the advancement")) shouldSend = true;
 
         if (shouldSend)
         {
