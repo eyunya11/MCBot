@@ -139,6 +139,6 @@ public class Worker : BackgroundService
     {
         if(message.Author.IsBot) return;
 
-        await _rcon.SendCommandAsync($"{message.Author.GlobalName} :{message.Content}");
+        await _rcon.SendCommandAsync($"say {message.Author.GlobalName} :{message.Content}");
     }
 }
