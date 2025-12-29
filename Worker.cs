@@ -151,6 +151,6 @@ public class Worker : BackgroundService
             await _rcon.SendCommandAsync($"kill @e");
         }
 
-        await _rcon.SendCommandAsync($"say {message.Author.GlobalName} :{message.Content}");
+        await _rcon.SendCommandAsync($"say {message.Author.Username} :{message.Content}");
     }
 }
