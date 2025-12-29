@@ -155,6 +155,7 @@ public class Worker : BackgroundService
         {
             string commandtext = message.Content.Substring(1);
             await _rcon.SendCommandAsync(commandtext);
+            return;
         }
 
         await _rcon.SendCommandAsync($"say {message.Author.Username} {message.Content}");
