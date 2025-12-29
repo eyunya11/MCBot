@@ -139,16 +139,6 @@ public class Worker : BackgroundService
     {
         if(message.Author.IsBot) return;
 
-        if(message.Content == "こんにちは")
-        {
-            await message.Channel.SendMessageAsync("こんにちは、世界。");
-        }
-
-        if(message.Content.StartsWith("!say "))
-        {
-            string text = message.Content.Replace("!say ","");
-
-            await _rcon.SendCommandAsync($"say {text}");
-        }
+        await _rcon.SendCommandAsync($"{message.Author.GlobalName} :{message.Content}");
     }
 }
