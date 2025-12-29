@@ -101,6 +101,7 @@ public class Worker : BackgroundService
     {
         if(line.Contains("RCON Client")) return;
         if(!line.Contains("[Server thread/INFO]")) return;
+        if(line.Contains("[Rcon]")) return;
 
         bool shouldSend = false;
 
