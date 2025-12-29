@@ -145,11 +145,11 @@ public class Worker : BackgroundService
     {
         if(message.Author.IsBot) return;
         
-        if(message.Content.StartsWith("消えてなくなってしまえぇぇぇ"))
-        {
-            await _rcon.SendCommandAsync($"kill @e");
-        }
+        // if(message.Content.StartsWith("消えてなくなってしまえぇぇぇ"))
+        // {
+        //     await _rcon.SendCommandAsync($"kill @e");
+        // }
 
-        await _rcon.SendCommandAsync($"say {message.Author.Username} :{message.Content}");
+        await _rcon.SendCommandAsync($"say {message.Author.Username} {message.Content}");
     }
 }
