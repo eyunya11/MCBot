@@ -109,6 +109,7 @@ public class Worker : BackgroundService
         else if (line.Contains("left the game")) shouldSend = true;
         else if (line.Contains("has made the advancement")) shouldSend = true;
         else if (line.Contains("has completed the challenge")) shouldSend = true;
+        else if (line.Contains(": [@")) shouldSend = false;
         else if (line.Contains(": [")) shouldSend = true;
 
         if (shouldSend)
