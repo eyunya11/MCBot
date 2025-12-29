@@ -103,16 +103,15 @@ public class Worker : BackgroundService
         if(!line.Contains("[Server thread/INFO]")) return;
         if(line.Contains("[Rcon]")) return;
 
+        List<string> Conditions = new List<string>{": <","joined the game","has made the advancement","has completed the challenge",": [@",": [",};
         bool shouldSend = false;
 
-        if (line.Contains(": <")) shouldSend = true;
-        else if (line.Contains("joined the game")) shouldSend = true;
-        else if (line.Contains("left the game")) shouldSend = true;
-        else if (line.Contains("has made the advancement")) shouldSend = true;
-        else if (line.Contains("has completed the challenge")) shouldSend = true;
-        else if (line.Contains(": [@")) shouldSend = false;
-        else if (line.Contains(": [")) shouldSend = true;
-        else if (line.Contains("[Rcon]")) shouldSend = false;
+        foreach(string text in Conditions)
+        {
+            if(line.Contains(text)) shouldSend = true;
+        }
+
+        if (line.Contains("[Rcon]")) shouldSend = false;
 
         if (shouldSend)
         {
