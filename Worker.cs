@@ -4,6 +4,7 @@ using System.Text.Json;
 using CoreRCON;
 using System.Net;
 using System.Text;
+using System.Data;
 
 namespace MCBot;
 
@@ -149,6 +150,12 @@ public class Worker : BackgroundService
         // {
         //     await _rcon.SendCommandAsync($"kill @e");
         // }
+
+        if(message.Content.StartsWith("/"))
+        {
+            string commandtext = message.Content.Substring(1);
+            await _rcon.SendCommandAsync(commandtext);
+        }
 
         await _rcon.SendCommandAsync($"say {message.Author.Username} {message.Content}");
     }
