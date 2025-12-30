@@ -24,7 +24,7 @@ public class Worker : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _client.Log += LogAsync;
-        _client.Ready += SetBotStatusAsync;
+        // _client.Ready += SetBotStatusAsync;
         _client.MessageReceived += OnMessageReceived;
 
         string rconIp = _config["Minecraft:IP"];
@@ -101,9 +101,23 @@ public class Worker : BackgroundService
 
     private async Task ProcessLogLine(string line, ulong channelId)
     {
+        var channel = _client.GetChannel(channelId) as IMessageChannel;
+
         if(line.Contains("RCON Client")) return;
         if(!line.Contains("[Server thread/INFO]")) return;
         if(line.Contains("[Rcon]")) return;
+
+        if(line.Contains("Stopping server")) 
+        {
+            await channel.SendMessageAsync("## Server Stopped");
+            await _client.SetActivityAsync(null);
+        }
+        if(line.Contains("]: Done ("))
+        {
+            await channel.SendMessageAsync("## Sever Started");
+            await _client.SetActivityAsync(new Game("Minecraft Server", ActivityType.Playing));
+        }
+
 
         List<string> Conditions = new List<string>{": <","joined the game","left the game","has made the advancement","has completed the challenge",": [@",": [",};
         bool shouldSend = false;
@@ -117,7 +131,6 @@ public class Worker : BackgroundService
 
         if (shouldSend)
         {
-            var channel = _client.GetChannel(channelId) as IMessageChannel;
             if (channel != null)
             {
                 string messageToSend = line;
@@ -161,11 +174,6 @@ public class Worker : BackgroundService
         }
 
         await _rcon.SendCommandAsync($"say {message.Author.Username} {message.Content}");
-    }
-
-    private async Task SetBotStatusAsync()
-    {
-        await _client.SetActivityAsync(new Game("Minecraft Server", ActivityType.Playing));
     }
 
 }
