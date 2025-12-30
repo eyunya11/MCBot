@@ -16,11 +16,14 @@ public class Worker : BackgroundService
     private RCON _rcon;
     private IPEndPoint _rconEndpoint;
     private string _rconPassword;
+    public Worker(ILogger<Worker> logger, DiscordSocketClient client, IConfiguration config)
+    {
+        _logger = logger;
+        _client = client;
+        _config = config;
+    }
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        if (_client == null || _config == null || _logger == null)
-            throw new InvalidOperationException("必要な依存関係が注入されていません");
-
         _client.Log += LogAsync;
         _client.MessageReceived += OnMessageReceived;
 
