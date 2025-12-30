@@ -110,53 +110,80 @@ public class Worker : BackgroundService
             _logger.LogInformation("ログファイルが見つかりませんでした");
         }
 
-        _logger.LogInformation("ログ監視開始");
+        _logger?.LogInformation("ログ監視開始");
 
-        using (var stream = new FileStream(logPath, FileMode.Open, FileAccess.Read, FileShare.Write))
-        using (var reader = new StreamReader(stream, Encoding.UTF8))
+        while (!token.IsCancellationRequested)
         {
-            reader.BaseStream.Seek(0, SeekOrigin.End);
-
-            while(!token.IsCancellationRequested)
+            try
             {
-                var line = await reader.ReadLineAsync();
-
-                if(line != null)
+                // ログファイルが存在しない場合は待機
+                while (!File.Exists(logPath) && !token.IsCancellationRequested)
                 {
-                    await ProcessLogLine(line, channelId);
+                    await Task.Delay(3000, token);
+                    _logger?.LogInformation("ログファイルを再度探しています...");
                 }
-                else
+
+                if (token.IsCancellationRequested) break;
+
+                using (var stream = new FileStream(logPath, FileMode.Open, FileAccess.Read, FileShare.Write))
+                using (var reader = new StreamReader(stream, Encoding.UTF8))
                 {
-                    await Task.Delay(500, token);
-                    
-                    // RCON接続状態をチェック（定期的に）
-                    if (_rcon != null && _logger != null)
+                    reader.BaseStream.Seek(0, SeekOrigin.End);
+
+                    while (!token.IsCancellationRequested)
                     {
-                        try
+                        var line = await reader.ReadLineAsync();
+
+                        if (line != null)
                         {
-                            // RCONが接続しているかテスト
-                            await _rcon.SendCommandAsync("list");
+                            await ProcessLogLine(line, channelId);
                         }
-                        catch (Exception)
+                        else
                         {
-                            // 接続が切れている場合、再接続を試みる
-                            _logger.LogWarning("RCON接続が切れています。再接続を試みています...");
-                            if (_rconEndpoint != null && _rconPassword != null)
+                            await Task.Delay(500, token);
+
+                            // RCON接続状態をチェック（定期的に）
+                            if (_rcon != null && _logger != null)
                             {
                                 try
                                 {
-                                    _rcon = new RCON(_rconEndpoint, _rconPassword);
-                                    await _rcon.ConnectAsync();
-                                    _logger.LogInformation("RCON再接続成功");
+                                    // RCONが接続しているかテスト
+                                    await _rcon.SendCommandAsync("list");
                                 }
-                                catch (Exception ex)
+                                catch (Exception)
                                 {
-                                    _logger.LogWarning($"RCON再接続失敗: {ex.Message}");
+                                    // 接続が切れている場合、再接続を試みる
+                                    _logger.LogWarning("RCON接続が切れています。再接続を試みています...");
+                                    if (_rconEndpoint != null && _rconPassword != null)
+                                    {
+                                        try
+                                        {
+                                            _rcon = new RCON(_rconEndpoint, _rconPassword);
+                                            await _rcon.ConnectAsync();
+                                            _logger.LogInformation("RCON再接続成功");
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            _logger.LogWarning($"RCON再接続失敗: {ex.Message}");
+                                        }
+                                    }
                                 }
+                            }
+
+                            // ログファイルが削除されていないかチェック
+                            if (!File.Exists(logPath))
+                            {
+                                _logger?.LogWarning("ログファイルが削除されました。再度探します...");
+                                break; // 内側のwhile ループを抜けて、ファイルを探し直す
                             }
                         }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError($"ログ監視中にエラーが発生しました: {ex.Message}");
+                await Task.Delay(3000, token); // エラー後に3秒待機して再試行
             }
         }
     }
