@@ -24,6 +24,7 @@ public class Worker : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _client.Log += LogAsync;
+        _client.Ready += SetBotStatusAsync;
         _client.MessageReceived += OnMessageReceived;
 
         string rconIp = _config["Minecraft:IP"];
@@ -161,4 +162,10 @@ public class Worker : BackgroundService
 
         await _rcon.SendCommandAsync($"say {message.Author.Username} {message.Content}");
     }
+
+    private async Task SetBotStatusAsync()
+    {
+        await _client.SetActivityAsync(new Game("Minecraft Server", ActivityType.Playing));
+    }
+
 }
