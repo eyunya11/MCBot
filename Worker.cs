@@ -24,7 +24,6 @@ public class Worker : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _client.Log += LogAsync;
-        // _client.Ready += SetBotStatusAsync;
         _client.MessageReceived += OnMessageReceived;
 
         string rconIp = _config["Minecraft:IP"];
@@ -41,7 +40,18 @@ public class Worker : BackgroundService
         // Discordボットを先に起動
         await _client.LoginAsync(TokenType.Bot, discordToken);
         await _client.StartAsync();
-        _logger.LogInformation("Discord起動完了");
+        _logger.LogInformation("Discord起動開始");
+
+        // Discordボットの準備完了を待つ
+        var readyTask = new TaskCompletionSource<bool>();
+        Task ReadyHandler()
+        {
+            readyTask.SetResult(true);
+            return Task.CompletedTask;
+        }
+        _client.Ready += ReadyHandler;
+        await readyTask.Task;
+        _logger.LogInformation("Discord準備完了");
 
         // RCON接続に成功するまで3秒毎にリトライ
         bool rconConnected = false;
@@ -58,6 +68,11 @@ public class Worker : BackgroundService
                 if (channel != null)
                 {
                     await channel.SendMessageAsync("## Server Started");
+                    _logger.LogInformation("Server Startedメッセージ送信完了");
+                }
+                else
+                {
+                    _logger.LogWarning("チャンネルが見つかりませんでした");
                 }
                 await _client.SetActivityAsync(new Game("Minecraft Server", ActivityType.Playing));
             }
