@@ -14,15 +14,13 @@ public class Worker : BackgroundService
     private readonly DiscordSocketClient _client;
     private readonly IConfiguration _config;
     private RCON _rcon;
-
-    public Worker(ILogger<Worker> logger, DiscordSocketClient client, IConfiguration config)
-    {
-        _logger = logger;
-        _client = client;
-        _config = config;
-    }
+    private IPEndPoint _rconEndpoint;
+    private string _rconPassword;
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        if (_client == null || _config == null || _logger == null)
+            throw new InvalidOperationException("必要な依存関係が注入されていません");
+
         _client.Log += LogAsync;
         _client.MessageReceived += OnMessageReceived;
 
@@ -34,8 +32,9 @@ public class Worker : BackgroundService
         string logPath = _config["Minecraft:LogPath"];
         ulong channelId = _config.GetValue<ulong>("Discord:ChannelId");
         
-        var endpoint = new IPEndPoint(IPAddress.Parse(rconIp), rconPort);
-        _rcon = new RCON(endpoint, rconPass);
+        _rconEndpoint = new IPEndPoint(IPAddress.Parse(rconIp), rconPort);
+        _rconPassword = rconPass;
+        _rcon = new RCON(_rconEndpoint, _rconPassword);
 
         // Discordボットを先に起動
         await _client.LoginAsync(TokenType.Bot, discordToken);
@@ -117,7 +116,7 @@ public class Worker : BackgroundService
 
             while(!token.IsCancellationRequested)
             {
-                string line = await reader.ReadLineAsync();
+                var line = await reader.ReadLineAsync();
 
                 if(line != null)
                 {
@@ -141,12 +140,18 @@ public class Worker : BackgroundService
 
         if(line.Contains("Stopping server")) 
         {
-            await channel.SendMessageAsync("## Server Stopped");
+            if (channel != null)
+            {
+                await channel.SendMessageAsync("## Server Stopped");
+            }
             await _client.SetActivityAsync(null);
         }
         if(line.Contains("]: Done ("))
         {
-            await channel.SendMessageAsync("## Sever Started");
+            if (channel != null)
+            {
+                await channel.SendMessageAsync("## Sever Started");
+            }
             await _client.SetActivityAsync(new Game("Minecraft Server", ActivityType.Playing));
         }
 
@@ -191,21 +196,68 @@ public class Worker : BackgroundService
     private async Task OnMessageReceived(SocketMessage message)
     {
         if(message.Author.IsBot) return;
+        if (_config == null) return;
         if(message.Channel.Id != _config.GetValue<ulong>("Discord:ChannelId")) return;
         
         // if(message.Content.StartsWith("消えてなくなってしまえぇぇぇ"))
         // {
-        //     await _rcon.SendCommandAsync($"kill @e");
+        //     await SendRconCommandSafeAsync($"kill @e");
         // }
 
         if(message.Content.StartsWith("./"))
         {
             string commandtext = message.Content.Substring(2);
-            await _rcon.SendCommandAsync(commandtext);
+            await SendRconCommandSafeAsync(commandtext);
             return;
         }
 
-        await _rcon.SendCommandAsync($"say {message.Author.Username} {message.Content}");
+        await SendRconCommandSafeAsync($"say {message.Author.Username} {message.Content}");
+    }
+
+    private async Task SendRconCommandSafeAsync(string command)
+    {
+        if (_rcon == null || _logger == null || _rconEndpoint == null || _rconPassword == null)
+        {
+            _logger?.LogWarning("RCON が初期化されていません");
+            return;
+        }
+
+        int maxRetries = 3;
+        int currentRetry = 0;
+
+        while (currentRetry < maxRetries)
+        {
+            try
+            {
+                await _rcon.SendCommandAsync(command);
+                return; // 成功したら終了
+            }
+            catch (Exception ex)
+            {
+                currentRetry++;
+                _logger.LogWarning($"RCON送信失敗 (試行 {currentRetry}/{maxRetries}): {ex.Message}");
+
+                if (currentRetry < maxRetries)
+                {
+                    // 接続をリセットして再接続を試みる
+                    try
+                    {
+                        _logger.LogInformation("RCON再接続を試みています...");
+                        _rcon = new RCON(_rconEndpoint, _rconPassword);
+                        await _rcon.ConnectAsync();
+                        _logger.LogInformation("RCON再接続成功");
+                        await Task.Delay(500); // 接続安定化待機
+                    }
+                    catch (Exception reconnectEx)
+                    {
+                        _logger.LogWarning($"RCON再接続失敗: {reconnectEx.Message}");
+                        await Task.Delay(1000); // 次の試行まで待機
+                    }
+                }
+            }
+        }
+
+        _logger.LogError($"RCON送信完全失敗: {command}");
     }
 
 }
