@@ -52,14 +52,19 @@ public class Worker : BackgroundService
                 await _rcon.ConnectAsync();
                 _logger.LogInformation("RCON接続成功");
                 rconConnected = true;
-            }
-            catch
-            {
-                _logger.LogWarning($"RCON接続失敗 3秒後に再接続します");
+                
+                // RCON接続成功時にチャンネルにメッセージ送信
                 var channel = _client.GetChannel(channelId) as IMessageChannel;
-                await channel.SendMessageAsync("## Sever Started");
-                await Task.Delay(3000, stoppingToken);
+                if (channel != null)
+                {
+                    await channel.SendMessageAsync("## Server Started");
+                }
                 await _client.SetActivityAsync(new Game("Minecraft Server", ActivityType.Playing));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning($"RCON接続失敗: {ex.Message}. 3秒後に再試行します...");
+                await Task.Delay(3000, stoppingToken);
             }
         }
 
