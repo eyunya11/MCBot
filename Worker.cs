@@ -38,6 +38,12 @@ public class Worker : BackgroundService
         var endpoint = new IPEndPoint(IPAddress.Parse(rconIp), rconPort);
         _rcon = new RCON(endpoint, rconPass);
 
+        // Discordボットを先に起動
+        await _client.LoginAsync(TokenType.Bot, discordToken);
+        await _client.StartAsync();
+        _logger.LogInformation("Discord起動完了");
+
+        // RCON接続に成功するまで3秒毎にリトライ
         bool rconConnected = false;
         while (!rconConnected && !stoppingToken.IsCancellationRequested)
         {
@@ -66,9 +72,6 @@ public class Worker : BackgroundService
         // {
         //     throw new InvalidOperationException("トークンが空です。");
         // }
-
-        await _client.LoginAsync(TokenType.Bot, discordToken);
-        await _client.StartAsync();
 
         _logger.LogInformation("起動完了");
 
