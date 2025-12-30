@@ -152,9 +152,9 @@ public class Worker : BackgroundService
         //     await _rcon.SendCommandAsync($"kill @e");
         // }
 
-        if(message.Content.StartsWith("/"))
+        if(message.Content.StartsWith("./"))
         {
-            string commandtext = message.Content.Substring(1);
+            string commandtext = message.Content.Substring(2);
             await _rcon.SendCommandAsync(commandtext);
             return;
         }
