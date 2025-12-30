@@ -128,6 +128,34 @@ public class Worker : BackgroundService
                 else
                 {
                     await Task.Delay(500, token);
+                    
+                    // RCON接続状態をチェック（定期的に）
+                    if (_rcon != null && _logger != null)
+                    {
+                        try
+                        {
+                            // RCONが接続しているかテスト
+                            await _rcon.SendCommandAsync("list");
+                        }
+                        catch (Exception)
+                        {
+                            // 接続が切れている場合、再接続を試みる
+                            _logger.LogWarning("RCON接続が切れています。再接続を試みています...");
+                            if (_rconEndpoint != null && _rconPassword != null)
+                            {
+                                try
+                                {
+                                    _rcon = new RCON(_rconEndpoint, _rconPassword);
+                                    await _rcon.ConnectAsync();
+                                    _logger.LogInformation("RCON再接続成功");
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.LogWarning($"RCON再接続失敗: {ex.Message}");
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -135,6 +163,8 @@ public class Worker : BackgroundService
 
     private async Task ProcessLogLine(string line, ulong channelId)
     {
+        if (line == null || _client == null || _logger == null) return;
+
         var channel = _client.GetChannel(channelId) as IMessageChannel;
 
         if(line.Contains("RCON Client")) return;
@@ -156,6 +186,22 @@ public class Worker : BackgroundService
                 await channel.SendMessageAsync("## Sever Started");
             }
             await _client.SetActivityAsync(new Game("Minecraft Server", ActivityType.Playing));
+            
+            // サーバー起動時にRCON再接続を試みる
+            if (_rcon != null && _rconEndpoint != null && _rconPassword != null)
+            {
+                try
+                {
+                    _logger.LogInformation("サーバー起動検出 - RCON再接続を試みています...");
+                    _rcon = new RCON(_rconEndpoint, _rconPassword);
+                    await _rcon.ConnectAsync();
+                    _logger.LogInformation("RCON再接続成功");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning($"RCON再接続失敗: {ex.Message}");
+                }
+            }
         }
 
 
