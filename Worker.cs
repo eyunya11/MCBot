@@ -35,17 +35,23 @@ public class Worker : BackgroundService
         string logPath = _config["Minecraft:LogPath"];
         ulong channelId = _config.GetValue<ulong>("Discord:ChannelId");
         
-        try
-        {
-            var endpoint = new IPEndPoint(IPAddress.Parse(rconIp),rconPort);
-            _rcon = new RCON(endpoint, rconPass);
+        var endpoint = new IPEndPoint(IPAddress.Parse(rconIp), rconPort);
+        _rcon = new RCON(endpoint, rconPass);
 
-            await _rcon.ConnectAsync();
-            _logger.LogInformation("RCON接続成功");
-        }
-        catch
+        bool rconConnected = false;
+        while (!rconConnected && !stoppingToken.IsCancellationRequested)
         {
-            _logger.LogInformation("RCON接続失敗");
+            try
+            {
+                await _rcon.ConnectAsync();
+                _logger.LogInformation("RCON接続成功");
+                rconConnected = true;
+            }
+            catch
+            {
+                _logger.LogWarning($"RCON接続失敗 3秒後に再接続します");
+                await Task.Delay(3000, stoppingToken);
+            }
         }
 
         // var jsonPath = Path.Combine(AppContext.BaseDirectory, "token.json");
