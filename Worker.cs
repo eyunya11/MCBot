@@ -1,8 +1,6 @@
 using Discord;
 using Discord.WebSocket;
 using System.Text.Json;
-using System.Text.Json.Serialization;
-using Newtonsoft.Json;
 using CoreRCON;
 using System.Net;
 using System.Text;
@@ -78,24 +76,7 @@ public class Worker : BackgroundService
                 {
                     _logger.LogWarning("チャンネルが見つかりませんでした");
                 }
-                
-                var activity = new CustomActivity
-                {
-                    Name = "Minecraft",
-                    Type = ActivityType.Playing,
-                    Details = "✅Server Active",
-                    State = "In Game",
-                    Timestamps = new CustomTimestamps
-                    {
-                        Start = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()
-                    },
-                    Assets = new CustomAssets
-                    {
-                        LargeImage = "minecrafticon",
-                        LargeText = "Minecraft Server"
-                    }
-                };
-                await _client.SetActivityAsync(activity);
+                await _client.SetActivityAsync(new Game("✅Server Active", ActivityType.Playing));
             }
             catch (Exception ex)
             {
