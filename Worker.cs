@@ -76,7 +76,7 @@ public class Worker : BackgroundService
                 {
                     _logger.LogWarning("チャンネルが見つかりませんでした");
                 }
-                await _client.SetActivityAsync(new Game("Minecraft Server", ActivityType.Playing));
+                await _client.SetActivityAsync(new Game("✅Server Active", ActivityType.Playing));
             }
             catch (Exception ex)
             {
@@ -204,7 +204,7 @@ public class Worker : BackgroundService
             {
                 await channel.SendMessageAsync("## Server Stopped");
             }
-            await _client.SetActivityAsync(null);
+            await _client.SetActivityAsync(new Game("🛑Server Inactive", ActivityType.Playing));
         }
         if(line.Contains("]: Done ("))
         {
@@ -212,7 +212,7 @@ public class Worker : BackgroundService
             {
                 await channel.SendMessageAsync("## Sever Started");
             }
-            await _client.SetActivityAsync(new Game("Minecraft Server", ActivityType.Playing));
+            await _client.SetActivityAsync(new Game("✅Server Active", ActivityType.Playing));
             
             // サーバー起動時にRCON再接続を試みる
             if (_rcon != null && _rconEndpoint != null && _rconPassword != null)
