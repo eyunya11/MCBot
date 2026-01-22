@@ -259,6 +259,7 @@ public class Worker : BackgroundService
                 }
 
                 await channel.SendMessageAsync(messageToSend);
+                _logger.LogInformation(messageToSend);
             }
         }
     }
