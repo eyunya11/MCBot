@@ -284,10 +284,12 @@ public class Worker : BackgroundService
         {
             string commandtext = message.Content.Substring(2);
             await SendRconCommandSafeAsync(commandtext);
+            _logger.LogInformation($"{commandtext}を実行しました。");
             return;
         }
 
         await SendRconCommandSafeAsync($"say {message.Author.Username} {message.Content}");
+        _logger.LogInformation($"{message.Content}を送信しました");
     }
 
     private async Task SendRconCommandSafeAsync(string command)
