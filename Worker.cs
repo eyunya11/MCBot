@@ -221,14 +221,14 @@ public class Worker : BackgroundService
         if(!line.Contains("[Server thread/INFO]")) return;
         if(line.Contains("[Rcon]")) return;
 
-        if(line.Contains("Stopping server")) 
-        {
-            if (channel != null)
-            {
-                await channel.SendMessageAsync("## Server Stopped");
-            }
-            await _client.SetActivityAsync(new Game("🛑Server Inactive", ActivityType.Playing));
-        }
+        // if(line.Contains("Stopping server")) 
+        // {
+        //     if (channel != null)
+        //     {
+        //         await channel.SendMessageAsync("## Server Stopped");
+        //     }
+        //     await _client.SetActivityAsync(new Game("🛑Server Inactive", ActivityType.Playing));
+        // }
         if(line.Contains("Starting minecraft server"))
         {
             _logger.LogInformation("MC鯖起動");
