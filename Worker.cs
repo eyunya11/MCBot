@@ -161,6 +161,12 @@ public class Worker : BackgroundService
                                             _rcon = new RCON(_rconEndpoint, _rconPassword);
                                             await _rcon.ConnectAsync();
                                             _logger.LogInformation("RCON再接続成功");
+                                            var channel = _client.GetChannel(channelId) as IMessageChannel;
+                                            if (channel != null)
+                                            {
+                                                await channel.SendMessageAsync("## Server Started");
+                                            }
+                                            await _client.SetActivityAsync(new Game("✅Server Active", ActivityType.Playing));
                                         }
                                         catch (Exception ex)
                                         {
