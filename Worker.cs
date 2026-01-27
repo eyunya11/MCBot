@@ -5,6 +5,7 @@ using CoreRCON;
 using System.Net;
 using System.Text;
 using System.Data;
+using System.Threading.Channels;
 
 namespace MCBot;
 
@@ -180,6 +181,12 @@ public class Worker : BackgroundService
                                             catch (Exception ex)
                                             {
                                                 _logger.LogWarning($"RCON再接続失敗 (試行 {retryCount}): {ex.Message}");
+                                                if (retryCount == 1)
+                                                {
+                                                    var channel = _client.GetChannel(channelId) as IMessageChannel;
+                                                    await channel.SendMessageAsync("## Server Stopped");
+                                                    await _client.SetActivityAsync(new Game("🛑Server Inactive", ActivityType.Playing));
+                                                }
                                             }
                                         }
                                     }
