@@ -156,21 +156,31 @@ public class Worker : BackgroundService
                                     _logger.LogWarning("RCON接続が切れています。再接続を試みています...");
                                     if (_rconEndpoint != null && _rconPassword != null)
                                     {
-                                        try
+                                        // 成功するまで無限にリトライ
+                                        bool reconnected = false;
+                                        int retryCount = 0;
+                                        while (!reconnected && !token.IsCancellationRequested)
                                         {
-                                            _rcon = new RCON(_rconEndpoint, _rconPassword);
-                                            await _rcon.ConnectAsync();
-                                            _logger.LogInformation("RCON再接続成功");
-                                            var channel = _client.GetChannel(channelId) as IMessageChannel;
-                                            if (channel != null)
+                                            try
                                             {
-                                                await channel.SendMessageAsync("## Server Started");
+                                                await Task.Delay(3000, token);
+                                                retryCount++;
+                                                _logger.LogInformation($"RCON再接続試行中 {retryCount}");
+                                                _rcon = new RCON(_rconEndpoint, _rconPassword);
+                                                await _rcon.ConnectAsync();
+                                                _logger.LogInformation("RCON再接続成功");
+                                                var channel = _client.GetChannel(channelId) as IMessageChannel;
+                                                if (channel != null)
+                                                {
+                                                    await channel.SendMessageAsync("## Server Started");
+                                                }
+                                                await _client.SetActivityAsync(new Game("✅Server Active", ActivityType.Playing));
+                                                reconnected = true;
                                             }
-                                            await _client.SetActivityAsync(new Game("✅Server Active", ActivityType.Playing));
-                                        }
-                                        catch (Exception ex)
-                                        {
-                                            _logger.LogWarning($"RCON再接続失敗: {ex.Message}");
+                                            catch (Exception ex)
+                                            {
+                                                _logger.LogWarning($"RCON再接続失敗 (試行 {retryCount}): {ex.Message}");
+                                            }
                                         }
                                     }
                                 }
