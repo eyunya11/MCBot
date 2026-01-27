@@ -206,7 +206,7 @@ public class Worker : BackgroundService
             }
             await _client.SetActivityAsync(new Game("🛑Server Inactive", ActivityType.Playing));
         }
-        if(line.Contains("]: Done ("))
+        if(line.Contains("Starting minecraft server"))
         {
             if (channel != null)
             {
