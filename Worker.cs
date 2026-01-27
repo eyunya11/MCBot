@@ -126,7 +126,7 @@ public class Worker : BackgroundService
 
                 if (token.IsCancellationRequested) break;
 
-                using (var stream = new FileStream(logPath, FileMode.Open, FileAccess.Read, FileShare.Write))
+                using (var stream = new FileStream(logPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 using (var reader = new StreamReader(stream, Encoding.UTF8))
                 {
                     reader.BaseStream.Seek(0, SeekOrigin.End);
@@ -142,6 +142,21 @@ public class Worker : BackgroundService
                         else
                         {
                             await Task.Delay(500, token);
+
+                            // ログファイルがローテーション/再生成された場合は開き直す
+                            try
+                            {
+                                var info = new FileInfo(logPath);
+                                if (info.Exists && info.Length < reader.BaseStream.Position)
+                                {
+                                    _logger?.LogInformation("ログファイルが再生成されました。再オープンします...");
+                                    break; // 内側のwhileを抜けてファイルを開き直す
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                _logger?.LogWarning($"ログファイル状態確認に失敗しました: {ex.Message}");
+                            }
 
                             // RCON接続状態をチェック（定期的に）
                             if (_rcon != null && _logger != null)
