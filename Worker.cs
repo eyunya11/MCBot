@@ -208,6 +208,7 @@ public class Worker : BackgroundService
         }
         if(line.Contains("Starting minecraft server"))
         {
+            _logger.LogInformation("MC鯖起動");
             if (channel != null)
             {
                 await channel.SendMessageAsync("## Sever Started");
